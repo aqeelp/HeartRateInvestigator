@@ -1,10 +1,13 @@
 package io.github.aqeelp.heartrateinvestigator;
 
 import android.Manifest;
+import android.app.usage.UsageStatsManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
 
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -59,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initService() {
         Log.d(TAG, "Starting up Heart Rate receiver service...");
-        HeartRateReceiver.context = this;
+
         Intent notificationServiceStarter = new Intent(this, HeartRateReceiver.class);
         startService(notificationServiceStarter);
     }

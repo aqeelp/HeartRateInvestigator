@@ -33,11 +33,11 @@ public class HeartRateReceiver extends WearableListenerService {
     private static final String DATA_FILE_PATH = Environment.getExternalStorageDirectory()
             + File.separator + "aqeelp_heartrate" + File.separator + "heartRateData.json";
     private static int records;
-    public static Context context;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        records = 0;
 
         Log.d(TAG, "Mobile-side data receiver created.");
     }
@@ -45,9 +45,8 @@ public class HeartRateReceiver extends WearableListenerService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Data receiver service started - making STICKY.");
-        records = 0;
 
-        Handler handler = new Handler();
+        /*Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
 
             @Override
@@ -59,7 +58,7 @@ public class HeartRateReceiver extends WearableListenerService {
                     e.printStackTrace();
                 }
             }
-        }, 1000);
+        }, 1000);*/
 
         return START_STICKY;
     }
@@ -76,6 +75,7 @@ public class HeartRateReceiver extends WearableListenerService {
             String activity = getCurrentPackage();
 
             try {
+                Log.d(TAG, "DataMap contents: " + dataMap.toString());
                 writeData(heartRate, time, activity);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -85,7 +85,7 @@ public class HeartRateReceiver extends WearableListenerService {
 
     private String getCurrentPackage() {
         UsageStats currentApp = null;
-        UsageStatsManager usm = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+        UsageStatsManager usm = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
         long time = System.currentTimeMillis();
         List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000 * 1000, time);
         if (appList != null && appList.size() > 0) {

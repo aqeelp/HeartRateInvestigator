@@ -1,11 +1,15 @@
 package io.github.aqeelp.heartrateinvestigator;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -17,6 +21,7 @@ import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -58,6 +63,16 @@ public class BroadcastService extends IntentService implements SensorEventListen
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mHeartRateSensor = mSensorManager.getDefaultSensor(SAMSUNG_HEARTRATE_TYPE);
         mSensorManager.registerListener(this, this.mHeartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
+
+        final Handler h = new Handler();
+        final int delay = 15000; //milliseconds
+        h.postDelayed(new Runnable() {
+            public void run() {
+                //do something
+                sendRecentAverage();
+                h.postDelayed(this, delay);
+            }
+        }, delay);
     }
 
     @Override
@@ -67,11 +82,7 @@ public class BroadcastService extends IntentService implements SensorEventListen
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        int averageValue = (int) recentAverage();
-        DataMap dataMap = new DataMap();
-        dataMap.putInt("heartRate", averageValue);
-        dataMap.putString("time", (new Date()).toString());
-        sendMessage(dataMap);
+
     }
 
     @Override
@@ -110,16 +121,19 @@ public class BroadcastService extends IntentService implements SensorEventListen
         }).start();
     }
 
-    private double recentAverage() {
+    private void sendRecentAverage() {
         float sum = 0f;
-        if(!recentHeartRates.isEmpty()) {
+        if (!recentHeartRates.isEmpty()) {
             for (float f : recentHeartRates) {
                 sum += f;
             }
-            return sum / recentHeartRates.size();
         }
-
+        sum /= recentHeartRates.size();
         recentHeartRates.clear();
-        return sum;
+
+        DataMap dataMap = new DataMap();
+        dataMap.putInt("heartRate", (int) sum);
+        dataMap.putString("time", (new Date()).toString());
+        sendMessage(dataMap);
     }
 }
