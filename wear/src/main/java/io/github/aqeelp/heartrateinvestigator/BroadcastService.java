@@ -32,8 +32,13 @@ public class BroadcastService extends IntentService implements SensorEventListen
     private static final String DATA_MESSAGE_PATH = "/heart_rate/data";
 
     private static final int SAMSUNG_HEARTRATE_TYPE = 65562;
-    private static final int MOTO_HEARTRATE_TYPE = 65538;
-    private static final int TIME_SECOND = 1000000;
+    // private static final int MOTO_HEARTRATE_TYPE = 65538;
+    private static final int MOTO_HEARTRATE_TYPE = Sensor.TYPE_HEART_RATE;
+
+    /* !!! CHANGE THE FOLLOWING LINE FOR DIFFERENT DEVICES: */
+    private static final int HEARTRATE_SENSOR = SAMSUNG_HEARTRATE_TYPE;
+    /* !!! CHANGE THE FOLLOWING LINE FOR DIFFERENT SAMPLE PERIODS: */
+    private static final int SECONDS = 10;
 
     private GoogleApiClient mGoogleApiClient;
     private SensorManager mSensorManager;
@@ -61,11 +66,11 @@ public class BroadcastService extends IntentService implements SensorEventListen
         mGoogleApiClient.connect();
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        mHeartRateSensor = mSensorManager.getDefaultSensor(SAMSUNG_HEARTRATE_TYPE);
+        mHeartRateSensor = mSensorManager.getDefaultSensor(HEARTRATE_SENSOR);
         mSensorManager.registerListener(this, this.mHeartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
 
         final Handler h = new Handler();
-        final int delay = 15000; //milliseconds
+        final int delay = SECONDS * 1000; //milliseconds
         h.postDelayed(new Runnable() {
             public void run() {
                 //do something
