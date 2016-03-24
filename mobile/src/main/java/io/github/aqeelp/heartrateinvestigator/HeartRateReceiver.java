@@ -75,8 +75,12 @@ public class HeartRateReceiver extends WearableListenerService {
             String activity = getCurrentPackage();
 
             try {
-                Log.d(TAG, "DataMap contents: " + dataMap.toString());
-                writeData(heartRate, time, activity);
+                if (activity != null) {
+                    Log.d(TAG, "Writing DataMap: " + dataMap.toString());
+                    writeData(heartRate, time, activity);
+                } else {
+                    Log.d(TAG, "No running process found. Received DataMap: " + dataMap.toString());
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
