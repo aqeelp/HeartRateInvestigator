@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.util.JsonWriter;
 import android.util.Log;
 
@@ -39,26 +40,22 @@ public class HeartRateReceiver extends WearableListenerService {
         super.onCreate();
         records = 0;
 
+        final Handler h = new Handler();
+        final int delay = 3 * 1000; //milliseconds
+        h.postDelayed(new Runnable() {
+            public void run() {
+                //do something
+                getCurrentPackage();
+                h.postDelayed(this, delay);
+            }
+        }, delay);
+
         Log.d(TAG, "Mobile-side data receiver created.");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Data receiver service started - making STICKY.");
-
-        /*Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    Log.d(TAG, "Writing data...");
-                    writeData(90, (new Date()).toString(), "com.orca.facebook");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 1000);*/
 
         return START_STICKY;
     }
@@ -73,13 +70,14 @@ public class HeartRateReceiver extends WearableListenerService {
             int heartRate = dataMap.getInt("heartRate");
             String time = dataMap.getString("time");
             String activity = getCurrentPackage();
+            // TODO: What about a background process like listening to music?
 
             try {
-                if (activity != null) {
+                if (activity != null && heartRate != 0) {
                     Log.d(TAG, "Writing DataMap: " + dataMap.toString());
                     writeData(heartRate, time, activity);
                 } else {
-                    Log.d(TAG, "No running process found. Received DataMap: " + dataMap.toString());
+                    Log.d(TAG, "Invalid process or heart rate. DataMap: " + dataMap.toString());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -88,6 +86,11 @@ public class HeartRateReceiver extends WearableListenerService {
     }
 
     private String getCurrentPackage() {
+        PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
+        if (!pm.isInteractive()) {
+            return null;
+        }
+
         UsageStats currentApp = null;
         UsageStatsManager usm = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
         long time = System.currentTimeMillis();
@@ -107,7 +110,7 @@ public class HeartRateReceiver extends WearableListenerService {
                     + ", last used at " + currentApp.getLastTimeUsed());
             return currentApp.getPackageName();
         } else {
-            return "";
+            return null;
         }
     }
 

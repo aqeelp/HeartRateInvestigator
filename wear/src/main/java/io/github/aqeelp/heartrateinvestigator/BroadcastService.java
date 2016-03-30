@@ -38,7 +38,7 @@ public class BroadcastService extends IntentService implements SensorEventListen
     /* !!! CHANGE THE FOLLOWING LINE FOR DIFFERENT DEVICES: */
     private static final int HEARTRATE_SENSOR = SAMSUNG_HEARTRATE_TYPE;
     /* !!! CHANGE THE FOLLOWING LINE FOR DIFFERENT SAMPLE PERIODS: */
-    private static final int SECONDS = 10;
+    private static final int SECONDS = 3;
 
     private GoogleApiClient mGoogleApiClient;
     private SensorManager mSensorManager;
@@ -95,7 +95,8 @@ public class BroadcastService extends IntentService implements SensorEventListen
         if (sensorEvent.values[0] > 0) {
             // String eventString = "sensor event: " + sensorEvent.sensor.getName()
                     // + ", accuracy: " + sensorEvent.accuracy + ", value: " + sensorEvent.values[0];
-            recentHeartRates.add(sensorEvent.values[0]);
+            if (sensorEvent.accuracy >= 2)
+                recentHeartRates.add(sensorEvent.values[0]);
         }
     }
 
