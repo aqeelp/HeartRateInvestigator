@@ -10,8 +10,13 @@ import android.os.PowerManager;
 import android.util.JsonWriter;
 import android.util.Log;
 
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
 import java.io.BufferedWriter;
@@ -30,9 +35,12 @@ import java.util.TreeMap;
  */
 public class HeartRateReceiver extends WearableListenerService {
     private static final String TAG = "HeartRateInvestigator";
-    private static final String DATA_MESSAGE_PATH = "/heart_rate/data";
-    private static final String DATA_FILE_PATH = Environment.getExternalStorageDirectory()
-            + File.separator + "aqeelp_heartrate" + File.separator + "heartRateData.json";
+    private static final String ACTIVITY_MESSAGE_PATH = "/heart_rate/activity";
+    private static final String NOTIFICATION_MESSAGE_PATH = "/heart_rate/notification";
+    private static final String ACTIVITY_FILE_PATH = Environment.getExternalStorageDirectory()
+            + File.separator + "aqeelp_heartrate" + File.separator + "activityData.json";
+    private static final String NOTIFICATION_FILE_PATH = Environment.getExternalStorageDirectory()
+            + File.separator + "aqeelp_heartrate" + File.separator + "notificationData.json";
     private static int records;
 
     @Override
@@ -40,15 +48,27 @@ public class HeartRateReceiver extends WearableListenerService {
         super.onCreate();
         records = 0;
 
-        final Handler h = new Handler();
-        final int delay = 3 * 1000; //milliseconds
-        h.postDelayed(new Runnable() {
+        final GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .build();
+        mGoogleApiClient.connect();
+        new Thread( new Runnable() {
+            @Override
             public void run() {
-                //do something
-                getCurrentPackage();
-                h.postDelayed(this, delay);
+                DataMap dataMap = new DataMap();
+                dataMap.putString("Message", "Hi!");
+                final byte[] rawData = dataMap.toByteArray();
+                NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes( mGoogleApiClient ).await();
+                for(Node node : nodes.getNodes()) {
+                    MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(
+                            mGoogleApiClient, node.getId(), "/heart_rate/notification", rawData).await();
+                    if (result.getStatus().isSuccess())
+                        Log.d(TAG, "Message sent successfully");
+                    else
+                        Log.d(TAG, "Message failed");
+                }
             }
-        }, delay);
+        }).start();
 
         Log.d(TAG, "Mobile-side data receiver created.");
     }
@@ -60,13 +80,13 @@ public class HeartRateReceiver extends WearableListenerService {
         return START_STICKY;
     }
 
-    @Override // WearableListenerService
+    @Override
     public void onMessageReceived(MessageEvent messageEvent) {
-        Log.d(TAG, "Message received!");
+        byte[] rawData = messageEvent.getData();
+        DataMap dataMap = DataMap.fromByteArray(rawData);
 
-        if (messageEvent.getPath().equalsIgnoreCase(DATA_MESSAGE_PATH)) {
-            byte[] rawData = messageEvent.getData();
-            DataMap dataMap = DataMap.fromByteArray(rawData);
+        if (messageEvent.getPath().equalsIgnoreCase(ACTIVITY_MESSAGE_PATH)) {
+            Log.d(TAG, "Message with Activity data received!");
             int heartRate = dataMap.getInt("heartRate");
             String time = dataMap.getString("time");
             String activity = getCurrentPackage();
@@ -75,13 +95,15 @@ public class HeartRateReceiver extends WearableListenerService {
             try {
                 if (activity != null && heartRate != 0) {
                     Log.d(TAG, "Writing DataMap: " + dataMap.toString());
-                    writeData(heartRate, time, activity);
+                    writeActivityData(heartRate, time, activity);
                 } else {
                     Log.d(TAG, "Invalid process or heart rate. DataMap: " + dataMap.toString());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
+            Log.d(TAG, "Message with Notif data received!");
         }
     }
 
@@ -114,8 +136,8 @@ public class HeartRateReceiver extends WearableListenerService {
         }
     }
 
-    private void writeData(int heartRate, String time, String packageName) throws IOException {
-        File file = new File(DATA_FILE_PATH);
+    private void writeActivityData(int heartRate, String time, String packageName) throws IOException {
+        File file = new File(ACTIVITY_FILE_PATH);
         BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
 
         if (records > 0) {

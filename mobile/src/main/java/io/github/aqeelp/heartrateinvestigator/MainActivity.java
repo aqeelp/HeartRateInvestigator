@@ -13,6 +13,13 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.Wearable;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -29,20 +36,16 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
 
         if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                Manifest.permission.READ_EXTERNAL_STORAGE},
-                        PERM_REQUEST_EX_STORAGE);
-
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.READ_EXTERNAL_STORAGE},
+                    PERM_REQUEST_EX_STORAGE);
         } else {
-
             initFile();
             initService();
             finish();
-
         }
     }
 
@@ -53,7 +56,10 @@ public class MainActivity extends AppCompatActivity {
             File folder = new File(dir); //folder name
             folder.mkdir();
 
-            File file = new File(dir, "heartRateData.json");
+            File file = new File(dir, "activityData.json");
+            file.createNewFile();
+
+            file = new File(dir, "notificationData.json");
             file.createNewFile();
 
             Log.d(TAG, "Created.");

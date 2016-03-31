@@ -16,20 +16,24 @@ import android.util.Log;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
+import com.google.android.gms.wearable.WearableListenerService;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by aqeelp on 3/22/16.
  */
-public class BroadcastService extends IntentService implements SensorEventListener {
+public class BroadcastService extends WearableListenerService implements SensorEventListener {
     private static final String TAG = "HeartRateInvestigator";
-    private static final String DATA_MESSAGE_PATH = "/heart_rate/data";
+    private static final String ACTIVITY_MESSAGE_PATH = "/heart_rate/activity";
+    private static final String NOTIFICATION_MESSAGE_PATH = "/heart_rate/notification";
 
     private static final int SAMSUNG_HEARTRATE_TYPE = 65562;
     // private static final int MOTO_HEARTRATE_TYPE = 65538;
@@ -38,16 +42,13 @@ public class BroadcastService extends IntentService implements SensorEventListen
     /* !!! CHANGE THE FOLLOWING LINE FOR DIFFERENT DEVICES: */
     private static final int HEARTRATE_SENSOR = SAMSUNG_HEARTRATE_TYPE;
     /* !!! CHANGE THE FOLLOWING LINE FOR DIFFERENT SAMPLE PERIODS: */
-    private static final int SECONDS = 3;
+    private static final int SECONDS = 10;
 
     private GoogleApiClient mGoogleApiClient;
     private SensorManager mSensorManager;
     private Sensor mHeartRateSensor;
     private ArrayList<Float> recentHeartRates;
-
-    public BroadcastService() {
-        super(null);
-    }
+    private ArrayList<Float> preNotificationRates;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -74,20 +75,20 @@ public class BroadcastService extends IntentService implements SensorEventListen
         h.postDelayed(new Runnable() {
             public void run() {
                 //do something
-                sendRecentAverage();
+                //sendRecentAverage();
+                Log.v(TAG, "Still alive!");
                 h.postDelayed(this, delay);
+
             }
         }, delay);
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
-    protected void onHandleIntent(Intent intent) {
-
+    @Override // WearableListenerService
+    public void onMessageReceived(MessageEvent messageEvent) {
+        Log.v(TAG, "Messaged received!");
+        if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
+            Log.v(TAG, DataMap.fromByteArray(messageEvent.getData()).getString("Message"));
+        }
     }
 
     @Override
@@ -105,9 +106,10 @@ public class BroadcastService extends IntentService implements SensorEventListen
         Log.d(TAG, "accuracy changed: " + accuracy);
     }
 
-    private void sendMessage(DataMap dataMap) {
+    private void sendMessage(DataMap dataMap, String p) {
         Log.d(TAG, "Attempting to send message from wearable... " + dataMap);
         final byte[] rawData = dataMap.toByteArray();
+        final String path = p;
 
         if (mGoogleApiClient == null) return;
 
@@ -117,7 +119,7 @@ public class BroadcastService extends IntentService implements SensorEventListen
                 NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes( mGoogleApiClient ).await();
                 for(Node node : nodes.getNodes()) {
                     MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(
-                            mGoogleApiClient, node.getId(), DATA_MESSAGE_PATH, rawData).await();
+                            mGoogleApiClient, node.getId(), path, rawData).await();
                     if (result.getStatus().isSuccess())
                         Log.d(TAG, "Message sent successfully");
                     else
@@ -127,19 +129,22 @@ public class BroadcastService extends IntentService implements SensorEventListen
         }).start();
     }
 
-    private void sendRecentAverage() {
+    private float average(List<Float> a) {
         float sum = 0f;
-        if (!recentHeartRates.isEmpty()) {
-            for (float f : recentHeartRates) {
+        if (!a.isEmpty()) {
+            for (float f : a) {
                 sum += f;
             }
         }
-        sum /= recentHeartRates.size();
-        recentHeartRates.clear();
+        sum /= a.size();
+        a.clear();
+        return sum;
+    }
 
+    private void sendRecentAverage() {
         DataMap dataMap = new DataMap();
-        dataMap.putInt("heartRate", (int) sum);
+        dataMap.putInt("heartRate", (int) average(recentHeartRates));
         dataMap.putString("time", (new Date()).toString());
-        sendMessage(dataMap);
+        sendMessage(dataMap, ACTIVITY_MESSAGE_PATH);
     }
 }
