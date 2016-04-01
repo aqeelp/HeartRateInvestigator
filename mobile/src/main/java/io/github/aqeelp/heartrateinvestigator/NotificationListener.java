@@ -66,6 +66,9 @@ public class NotificationListener extends NotificationListenerService implements
         dataMap.putString("timestamp", (new Date()).toString());
         final byte[] rawData = dataMap.toByteArray();
 
+        // TODO: check if the notification is interruptive
+        // Have to test the sbn.getNofication().vibrate long[] element and compare notifs that dont vibrate and those that do
+
         new Thread( new Runnable() {
             @Override
             public void run() {
