@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -62,12 +63,22 @@ public class NotificationListener extends NotificationListenerService implements
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         Log.d(TAG, "Notification posted. Attempting to send message... ");
+
+        long[] vibrate = sbn.getNotification().vibrate;
+        int defaults = sbn.getNotification().defaults;
+        Uri sound = sbn.getNotification().sound;
+
+        if (vibrate != null || defaults == Notification.DEFAULT_VIBRATE || defaults == Notification.DEFAULT_SOUND
+                || defaults == Notification.DEFAULT_ALL || sound != null) {
+            // This is a really terrible way to do this, but I don't want to sort the logic out backwards.
+        } else {
+            Log.d(TAG, "No vibrate. Doing nothing.");
+            return;
+        }
+
         DataMap dataMap = new DataMap();
         dataMap.putString("timestamp", (new Date()).toString());
         final byte[] rawData = dataMap.toByteArray();
-
-        // TODO: check if the notification is interruptive
-        // Have to test the sbn.getNofication().vibrate long[] element and compare notifs that dont vibrate and those that do
 
         new Thread( new Runnable() {
             @Override

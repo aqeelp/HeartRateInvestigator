@@ -72,7 +72,7 @@ public class HeartRateReceiver extends WearableListenerService {
                 e.printStackTrace();
             }
         } else if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
-            Log.d(TAG, "Message with Notif data received!");
+            Log.d(TAG, "Notif data received: " + dataMap.toString());
         }
     }
 
