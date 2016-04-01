@@ -45,18 +45,15 @@ public class NotificationReceiver extends WearableListenerService {
             Log.v(TAG, "Message sent along notification message path");
             preNotificationAverage = BroadcastService.average(BroadcastService.recentHeartRates);
             Log.v(TAG, "Got the first average!");
-            final Handler h = new Handler();
-            final int delay = 5; //milliseconds
-            h.postDelayed(new Runnable() {
-                public void run() {
-                    //do something
-                    //sendRecentAverage();
-                    Log.v(TAG, "Getting the second average!");
-                    postNotificationAverage = BroadcastService.average(BroadcastService.recentHeartRates);
-                    Log.v(TAG, "Ok gonna send now!");
-                    sendNotification();
-                }
-            }, delay);
+            try {
+                Thread.sleep(5000);
+                Log.v(TAG, "Getting the second average!");
+                postNotificationAverage = BroadcastService.average(BroadcastService.recentHeartRates);
+                Log.v(TAG, "Ok gonna send now!");
+                sendNotification();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

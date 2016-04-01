@@ -47,7 +47,12 @@ public class BroadcastService extends IntentService implements SensorEventListen
     private GoogleApiClient mGoogleApiClient;
     private SensorManager mSensorManager;
     private Sensor mHeartRateSensor;
-    public static ArrayList<Float> recentHeartRates;
+    public static ArrayList<Reading> recentHeartRates;
+
+    public class Reading {
+        public float heartRate;
+        public Date date;
+    }
 
     public BroadcastService() {
         super(null);
@@ -95,8 +100,19 @@ public class BroadcastService extends IntentService implements SensorEventListen
         if (sensorEvent.values[0] > 0) {
             // String eventString = "sensor event: " + sensorEvent.sensor.getName()
                     // + ", accuracy: " + sensorEvent.accuracy + ", value: " + sensorEvent.values[0];
-            if (sensorEvent.accuracy >= 2)
-                recentHeartRates.add(sensorEvent.values[0]);
+            if (sensorEvent.accuracy >= 2) {
+                Reading reading = new Reading();
+                reading.heartRate = sensorEvent.values[0];
+                reading.date = new Date();
+                recentHeartRates.add(reading);
+
+
+                for (int i = recentHeartRates.size() - 1; i >= 0; i--) {
+                    if (recentHeartRates.get(i).date.getTime() - reading.date.getTime() > 30000) {
+                        recentHeartRates.remove(i);
+                    }
+                }
+            }
         }
     }
 
@@ -142,7 +158,7 @@ public class BroadcastService extends IntentService implements SensorEventListen
 
     private void sendRecentAverage() {
         DataMap dataMap = new DataMap();
-        dataMap.putInt("heartRate", (int) average(recentHeartRates));
+        //TODO fix dataMap.putInt("heartRate", (int) average(recentHeartRates));
         dataMap.putString("time", (new Date()).toString());
         sendMessage(dataMap, ACTIVITY_MESSAGE_PATH);
     }
