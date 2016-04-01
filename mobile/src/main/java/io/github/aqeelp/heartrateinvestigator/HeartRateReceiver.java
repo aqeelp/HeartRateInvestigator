@@ -73,6 +73,13 @@ public class HeartRateReceiver extends WearableListenerService {
             }
         } else if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
             Log.d(TAG, "Notif data received: " + dataMap.toString());
+
+            try {
+                writeNotificationData(dataMap.getFloat("pre"), dataMap.getFloat("post"),
+                        dataMap.getString("timestamp"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -103,6 +110,27 @@ public class HeartRateReceiver extends WearableListenerService {
         } else {
             return null;
         }
+    }
+
+    private void writeNotificationData(float pre, float post, String time) throws IOException {
+        File file = new File(NOTIFICATION_FILE_PATH);
+        BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
+
+        JsonWriter writer = new JsonWriter(bw);
+        writer.setIndent("  ");
+
+        writer.beginObject();
+        writer.name("pre");
+        writer.value(pre);
+        writer.name("post");
+        writer.value(post);
+        writer.name("time");
+        writer.value(time);
+        writer.endObject();
+        writer.close();
+
+        bw.flush();
+        bw.close();
     }
 
     private void writeActivityData(int heartRate, String time, String packageName) throws IOException {
