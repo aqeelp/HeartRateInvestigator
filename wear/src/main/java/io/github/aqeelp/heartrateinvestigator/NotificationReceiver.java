@@ -43,12 +43,12 @@ public class NotificationReceiver extends WearableListenerService {
         Log.v(TAG, "Messaged received!");
         if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
             Log.v(TAG, "Message sent along notification message path");
-            preNotificationAverage = BroadcastService.average(BroadcastService.recentHeartRates);
+            preNotificationAverage = BroadcastService.average();
             Log.v(TAG, "Got the first average!");
             try {
                 Thread.sleep(5000);
                 Log.v(TAG, "Getting the second average!");
-                postNotificationAverage = BroadcastService.average(BroadcastService.recentHeartRates);
+                postNotificationAverage = BroadcastService.average();
                 Log.v(TAG, "Ok gonna send now!");
                 sendNotification();
             } catch (InterruptedException e) {

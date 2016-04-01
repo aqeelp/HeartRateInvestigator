@@ -144,15 +144,15 @@ public class BroadcastService extends IntentService implements SensorEventListen
         }).start();
     }
 
-    public static float average(List<Float> a) {
+    public static float average() {
         float sum = 0f;
-        if (!a.isEmpty()) {
-            for (float f : a) {
-                sum += f;
+        if (!recentHeartRates.isEmpty()) {
+            for (Reading r : recentHeartRates) {
+                sum += r.heartRate;
             }
         }
-        sum /= a.size();
-        a.clear();
+        sum /= recentHeartRates.size();
+        recentHeartRates.clear();
         return sum;
     }
 
