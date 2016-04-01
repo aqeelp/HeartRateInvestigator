@@ -42,14 +42,14 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new Thread( new Runnable() {
+                new Thread(new Runnable() {
                     @Override
                     public void run() {
                         DataMap dataMap = new DataMap();
                         dataMap.putString("Message", "Hi!");
                         final byte[] rawData = dataMap.toByteArray();
-                        NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes( mGoogleApiClient ).await();
-                        for(Node node : nodes.getNodes()) {
+                        NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+                        for (Node node : nodes.getNodes()) {
                             MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(
                                     mGoogleApiClient, node.getId(), "/heart_rate/notification", rawData).await();
                             if (result.getStatus().isSuccess())
@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+        startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
 
         if (ContextCompat.checkSelfPermission(this,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -99,8 +100,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void initService() {
         Log.d(TAG, "Starting up Heart Rate receiver service...");
+        Intent heartRateReceiverService = new Intent(this, HeartRateReceiver.class);
+        startService(heartRateReceiverService);
 
-        Intent notificationServiceStarter = new Intent(this, HeartRateReceiver.class);
+        Log.d(TAG, "Starting up Notification Listener service...");
+        Intent notificationServiceStarter = new Intent(this, NotificationListener.class);
         startService(notificationServiceStarter);
     }
 
@@ -111,11 +115,9 @@ public class MainActivity extends AppCompatActivity {
             case PERM_REQUEST_EX_STORAGE: {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
                     initFile();
                     initService();
                     finish();
-
                 }
             }
             return;

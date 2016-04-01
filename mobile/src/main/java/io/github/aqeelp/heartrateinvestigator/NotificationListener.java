@@ -1,71 +1,70 @@
 package io.github.aqeelp.heartrateinvestigator;
 
+import android.app.Notification;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.BatteryManager;
+import android.os.Bundle;
 import android.os.Handler;
+import android.service.notification.NotificationListenerService;
+import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
-import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
-import com.google.android.gms.wearable.WearableListenerService;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
- * Created by aqeelp on 4/1/16.
+ * Created by aqeelp on 1/23/16.
  */
-public class NotificationReceiver extends WearableListenerService {
+public class NotificationListener extends NotificationListenerService implements
+        GoogleApiClient.ConnectionCallbacks {
     private static final String TAG = "HeartRateInvestigator";
-    private static final String ACTIVITY_MESSAGE_PATH = "/heart_rate/activity";
     private static final String NOTIFICATION_MESSAGE_PATH = "/heart_rate/notification";
-    float preNotificationAverage, postNotificationAverage;
-    GoogleApiClient mGoogleApiClient;
+    private GoogleApiClient mGoogleApiClient;
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "Notification Listener service started - making STICKY.");
+
+        return START_STICKY;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(TAG, "Notification Listener service created.");
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
                 .build();
         mGoogleApiClient.connect();
-
-        Log.v(TAG, "NotificationReceiver created");
     }
 
-    @Override // WearableListenerService
-    public void onMessageReceived(MessageEvent messageEvent) {
-        Log.v(TAG, "Messaged received!");
-        if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
-            Log.v(TAG, "Message sent along notification message path");
-            preNotificationAverage = BroadcastService.average();
-            Log.v(TAG, "Got the first average!");
-            try {
-                Thread.sleep(10000);
-                Log.v(TAG, "Getting the second average!");
-                postNotificationAverage = BroadcastService.average();
-                Log.v(TAG, "Ok gonna send now!");
-                sendNotification();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mGoogleApiClient != null)
+            mGoogleApiClient.disconnect();
     }
 
-    private void sendNotification() {
-        Log.d(TAG, "Attempting to send notif message from wearable... ");
+    @Override
+    public void onNotificationPosted(StatusBarNotification sbn) {
+        Log.d(TAG, "Notification posted. Attempting to send message... ");
         DataMap dataMap = new DataMap();
-        dataMap.putFloat("pre", preNotificationAverage);
-        dataMap.putFloat("post", postNotificationAverage);
         dataMap.putString("timestamp", (new Date()).toString());
         final byte[] rawData = dataMap.toByteArray();
-
-        if (mGoogleApiClient == null) return;
 
         new Thread( new Runnable() {
             @Override
@@ -81,5 +80,19 @@ public class NotificationReceiver extends WearableListenerService {
                 }
             }
         }).start();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "onConnected: " + bundle);
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "onConnectionSuspended: " + i);
+        }
     }
 }
