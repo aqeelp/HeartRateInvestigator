@@ -48,28 +48,6 @@ public class HeartRateReceiver extends WearableListenerService {
         super.onCreate();
         records = 0;
 
-        final GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .build();
-        mGoogleApiClient.connect();
-        new Thread( new Runnable() {
-            @Override
-            public void run() {
-                DataMap dataMap = new DataMap();
-                dataMap.putString("Message", "Hi!");
-                final byte[] rawData = dataMap.toByteArray();
-                NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes( mGoogleApiClient ).await();
-                for(Node node : nodes.getNodes()) {
-                    MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(
-                            mGoogleApiClient, node.getId(), "/heart_rate/notification", rawData).await();
-                    if (result.getStatus().isSuccess())
-                        Log.d(TAG, "Message sent successfully");
-                    else
-                        Log.d(TAG, "Message failed");
-                }
-            }
-        }).start();
-
         Log.d(TAG, "Mobile-side data receiver created.");
     }
 

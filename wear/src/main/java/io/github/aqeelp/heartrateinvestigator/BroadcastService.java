@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Created by aqeelp on 3/22/16.
  */
-public class BroadcastService extends WearableListenerService implements SensorEventListener {
+public class BroadcastService extends IntentService implements SensorEventListener {
     private static final String TAG = "HeartRateInvestigator";
     private static final String ACTIVITY_MESSAGE_PATH = "/heart_rate/activity";
     private static final String NOTIFICATION_MESSAGE_PATH = "/heart_rate/notification";
@@ -47,14 +47,22 @@ public class BroadcastService extends WearableListenerService implements SensorE
     private GoogleApiClient mGoogleApiClient;
     private SensorManager mSensorManager;
     private Sensor mHeartRateSensor;
-    private ArrayList<Float> recentHeartRates;
-    private ArrayList<Float> preNotificationRates;
+    public static ArrayList<Float> recentHeartRates;
+
+    public BroadcastService() {
+        super(null);
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "BroadCast service started - making STICKY.");
 
         return START_STICKY;
+    }
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
+
     }
 
     @Override
@@ -70,25 +78,16 @@ public class BroadcastService extends WearableListenerService implements SensorE
         mHeartRateSensor = mSensorManager.getDefaultSensor(HEARTRATE_SENSOR);
         mSensorManager.registerListener(this, this.mHeartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
 
-        final Handler h = new Handler();
+        /*final Handler h = new Handler();
         final int delay = SECONDS * 1000; //milliseconds
         h.postDelayed(new Runnable() {
             public void run() {
-                //do something
                 //sendRecentAverage();
-                Log.v(TAG, "Still alive!");
+                //Log.v(TAG, "Still alive!");
                 h.postDelayed(this, delay);
 
             }
-        }, delay);
-    }
-
-    @Override // WearableListenerService
-    public void onMessageReceived(MessageEvent messageEvent) {
-        Log.v(TAG, "Messaged received!");
-        if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
-            Log.v(TAG, DataMap.fromByteArray(messageEvent.getData()).getString("Message"));
-        }
+        }, delay);*/
     }
 
     @Override
@@ -129,7 +128,7 @@ public class BroadcastService extends WearableListenerService implements SensorE
         }).start();
     }
 
-    private float average(List<Float> a) {
+    public static float average(List<Float> a) {
         float sum = 0f;
         if (!a.isEmpty()) {
             for (float f : a) {

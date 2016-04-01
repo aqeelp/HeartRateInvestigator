@@ -12,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.DataMap;
@@ -32,6 +33,34 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .build();
+        mGoogleApiClient.connect();
+
+        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new Thread( new Runnable() {
+                    @Override
+                    public void run() {
+                        DataMap dataMap = new DataMap();
+                        dataMap.putString("Message", "Hi!");
+                        final byte[] rawData = dataMap.toByteArray();
+                        NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes( mGoogleApiClient ).await();
+                        for(Node node : nodes.getNodes()) {
+                            MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(
+                                    mGoogleApiClient, node.getId(), "/heart_rate/notification", rawData).await();
+                            if (result.getStatus().isSuccess())
+                                Log.d(TAG, "Message sent successfully");
+                            else
+                                Log.d(TAG, "Message failed");
+                        }
+                    }
+                }).start();
+            }
+        });
 
         startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
 
