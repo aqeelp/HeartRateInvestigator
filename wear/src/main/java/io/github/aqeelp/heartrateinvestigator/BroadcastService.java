@@ -40,7 +40,7 @@ public class BroadcastService extends IntentService implements SensorEventListen
     private static final int MOTO_HEARTRATE_TYPE = Sensor.TYPE_HEART_RATE;
 
     /* !!! CHANGE THE FOLLOWING LINE FOR DIFFERENT DEVICES: */
-    private static final int HEARTRATE_SENSOR = SAMSUNG_HEARTRATE_TYPE;
+    private static final int HEARTRATE_SENSOR = MOTO_HEARTRATE_TYPE;
     /* !!! CHANGE THE FOLLOWING LINE FOR DIFFERENT SAMPLE PERIODS: */
     private static final int SECONDS = 10;
 
@@ -48,6 +48,7 @@ public class BroadcastService extends IntentService implements SensorEventListen
     private SensorManager mSensorManager;
     private Sensor mHeartRateSensor;
     public static ArrayList<Reading> recentHeartRates;
+    private static boolean waiting;
 
     public class Reading {
         public float heartRate;

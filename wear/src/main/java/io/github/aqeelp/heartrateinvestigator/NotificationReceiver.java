@@ -23,6 +23,7 @@ public class NotificationReceiver extends WearableListenerService {
     private static final String TAG = "HeartRateInvestigator";
     private static final String ACTIVITY_MESSAGE_PATH = "/heart_rate/activity";
     private static final String NOTIFICATION_MESSAGE_PATH = "/heart_rate/notification";
+    private static boolean waiting;
     float preNotificationAverage, postNotificationAverage;
     GoogleApiClient mGoogleApiClient;
 
@@ -35,22 +36,29 @@ public class NotificationReceiver extends WearableListenerService {
                 .build();
         mGoogleApiClient.connect();
 
+        waiting = false;
+
         Log.v(TAG, "NotificationReceiver created");
     }
 
     @Override // WearableListenerService
     public void onMessageReceived(MessageEvent messageEvent) {
+        if (waiting) return;
         Log.v(TAG, "Messaged received!");
         if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
             Log.v(TAG, "Message sent along notification message path");
             preNotificationAverage = BroadcastService.average();
             Log.v(TAG, "Got the first average!");
             try {
-                Thread.sleep(10000);
-                Log.v(TAG, "Getting the second average!");
-                postNotificationAverage = BroadcastService.average();
-                Log.v(TAG, "Ok gonna send now!");
-                sendNotification();
+                waiting = true;
+                Thread.sleep(5000);
+                if (waiting) {
+                    Log.v(TAG, "Getting the second average!");
+                    postNotificationAverage = BroadcastService.average();
+                    Log.v(TAG, "Ok gonna send now!");
+                    sendNotification();
+                    waiting = false;
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

@@ -116,6 +116,8 @@ public class HeartRateReceiver extends WearableListenerService {
         File file = new File(NOTIFICATION_FILE_PATH);
         BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
 
+        if (Float.isNaN(pre) || Float.isNaN(post)) return;
+
         JsonWriter writer = new JsonWriter(bw);
         writer.setIndent("  ");
 
