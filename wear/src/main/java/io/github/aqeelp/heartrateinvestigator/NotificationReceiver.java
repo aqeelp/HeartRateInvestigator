@@ -43,7 +43,7 @@ public class NotificationReceiver extends WearableListenerService {
 
     @Override // WearableListenerService
     public void onMessageReceived(MessageEvent messageEvent) {
-        if (waiting) return;
+        /*if (waiting) return;
         Log.v(TAG, "Messaged received!");
         if (messageEvent.getPath().equalsIgnoreCase(NOTIFICATION_MESSAGE_PATH)) {
             Log.v(TAG, "Message sent along notification message path");
@@ -51,7 +51,7 @@ public class NotificationReceiver extends WearableListenerService {
             Log.v(TAG, "Got the first average!");
             try {
                 waiting = true;
-                Thread.sleep(5000);
+                Thread.sleep(3000);
                 if (waiting) {
                     Log.v(TAG, "Getting the second average!");
                     postNotificationAverage = BroadcastService.average();
@@ -62,7 +62,7 @@ public class NotificationReceiver extends WearableListenerService {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     }
 
     private void sendNotification() {

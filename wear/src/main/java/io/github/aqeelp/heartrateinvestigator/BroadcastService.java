@@ -84,16 +84,16 @@ public class BroadcastService extends IntentService implements SensorEventListen
         mHeartRateSensor = mSensorManager.getDefaultSensor(HEARTRATE_SENSOR);
         mSensorManager.registerListener(this, this.mHeartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
 
-        /*final Handler h = new Handler();
-        final int delay = SECONDS * 1000; //milliseconds
+        final Handler h = new Handler();
+        final int delay = SECONDS * 15000; //milliseconds
         h.postDelayed(new Runnable() {
             public void run() {
-                //sendRecentAverage();
+                sendRecentAverage();
                 //Log.v(TAG, "Still alive!");
                 h.postDelayed(this, delay);
 
             }
-        }, delay);*/
+        }, delay);
     }
 
     @Override
@@ -159,7 +159,7 @@ public class BroadcastService extends IntentService implements SensorEventListen
 
     private void sendRecentAverage() {
         DataMap dataMap = new DataMap();
-        //TODO fix dataMap.putInt("heartRate", (int) average(recentHeartRates));
+        dataMap.putFloat("heartRate", average());
         dataMap.putString("time", (new Date()).toString());
         sendMessage(dataMap, ACTIVITY_MESSAGE_PATH);
     }

@@ -56,7 +56,7 @@ public class HeartRateReceiver extends WearableListenerService {
 
         if (messageEvent.getPath().equalsIgnoreCase(ACTIVITY_MESSAGE_PATH)) {
             Log.d(TAG, "Message with Activity data received!");
-            int heartRate = dataMap.getInt("heartRate");
+            float heartRate = dataMap.getFloat("heartRate");
             String time = dataMap.getString("time");
             String activity = getCurrentPackage();
             // TODO: What about a background process like listening to music?
@@ -135,7 +135,7 @@ public class HeartRateReceiver extends WearableListenerService {
         bw.close();
     }
 
-    private void writeActivityData(int heartRate, String time, String packageName) throws IOException {
+    private void writeActivityData(float heartRate, String time, String packageName) throws IOException {
         File file = new File(ACTIVITY_FILE_PATH);
         BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
 
